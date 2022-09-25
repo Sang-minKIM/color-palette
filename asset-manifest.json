@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/color-palette/static/js/main.6f1d33d2.js",
+    "index.html": "/color-palette/index.html",
+    "main.6f1d33d2.js.map": "/color-palette/static/js/main.6f1d33d2.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.6f1d33d2.js"
+  ]
+}
