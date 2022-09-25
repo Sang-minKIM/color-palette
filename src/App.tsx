@@ -1,106 +1,243 @@
-import React from "react";
-import { arrayBuffer } from "stream/consumers";
+import React, { useRef, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  DropResult,
+} from "react-beautiful-dnd";
+import { useRecoilState, useRecoilValue } from "recoil";
+
 import styled from "styled-components";
-import { Reset } from "styled-reset";
+import { categoryState, colorState, optionState } from "./atom";
+import Categories from "./Categories";
+import DraggableOption from "./DraggableOptions";
 
 const Container = styled.div`
   width: 100vw;
   height: 100vh;
-  border: solid;
+`;
+
+const GridContainer = styled.div`
+  width: 100vw;
+  height: calc(100% - 100px);
+
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(19, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   grid-template-areas:
-    "a a a a a a"
     "b c c c c c"
-    "b c c c c c"
-    "b c c c c c"
-    "b c c c c c"
-    "b c c c c c"
-    "b c c c c c"
-    "b c c c c c"
-    "b c c c c c"
-    "d d d d d d"
-    "d d d d d d"
-    "e e e e e e"
-    "e e e e e e"
-    "e e e e e e"
-    "e e e e e e"
-    "e e e e e e"
-    "e e e e e e"
-    "e e e e e e"
-    "e e e e e e"
-    
-}
+    "e e e e e e";
 `;
 const gridItem = styled.div`
   width: 100%;
   height: 100%;
 `;
-const Title = styled(gridItem)`
-  background-color: tomato;
-  grid-area: a;
-`;
-const Categories = styled(gridItem)`
-  background-color: aqua;
-  grid-area: b;
-  display: grid;
-`;
-const Options = styled(gridItem)`
-  background-color: yellow;
-  grid-area: c;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-`;
-const Menubar = styled(gridItem)`
-  background-color: purple;
-  grid-area: d;
-`;
-const Selected = styled(gridItem)`
-  background-color: turquoise;
-  grid-area: e;
+const Header = styled.div`
+  background-color: #ffffff;
+  width: 100%;
+  height: 50px !important;
   display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const Title = styled.div`
+  background-color: black;
+  color: white;
+  width: 260px;
+  height: 35px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 17px;
 `;
 
+const Options = styled(gridItem)`
+  grid-area: c;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+
+  width: 100%;
+  height: 100%;
+`;
+
+const Selected = styled(gridItem)`
+  background-color: #ecf0f1;
+  grid-area: e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const ColorDraggable = styled.div`
+  width: 100%;
+  height: 100%;
+  background-color: ${(props) => props.color};
+`;
+const Color = styled.div`
+  width: 80px;
+  height: 40px;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const ColorMenu = styled.div`
+  width: 100%;
+  height: 100%;
+  background-color: inherit;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+const Copy = styled.button`
+  width: 40px;
+  height: 40px;
+  font-size: larger;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 5px;
+  &:hover {
+    cursor: pointer;
+  }
+`;
+const Delete = styled.button`
+  width: 40px;
+  height: 40px;
+  font-size: larger;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 5px;
+`;
+
+const Footer = styled(gridItem)`
+  background-color: #ffffff;
+  width: 100vw;
+  height: 50px !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 10px;
+  font-weight: 500;
+`;
 function App() {
-  const array = new Array(12);
-  const options = [...array];
-  const array2 = new Array(8);
-  const categories = [...array2];
-  const array3 = new Array(6);
-  const colors = [...array3];
+  const options = useRecoilValue(optionState);
+  const categoryIndex = useRecoilValue(categoryState);
+  const [colors, setColors] = useRecoilState(colorState);
+  const onDragEnd = (info: DropResult) => {
+    console.log(info);
+    const { destination, draggableId, source } = info;
+    if (!destination) return;
+    if (
+      source.droppableId === "selected" &&
+      destination.droppableId === "selected"
+    ) {
+      console.log(draggableId);
+      setColors((allColors) => {
+        const selectedColors = [...allColors];
+        const selectedColor = draggableId;
+        selectedColors.splice(source.index, 1);
+        selectedColors.splice(destination.index, 0, selectedColor);
+        return selectedColors;
+      });
+      console.log(colors);
+    }
+    if (
+      destination.droppableId === "selected" &&
+      source.droppableId === "option"
+    ) {
+      setColors((allColors) => {
+        const selectedColor = draggableId;
+        const selectedColors = [...allColors];
+        if (!selectedColors.includes(selectedColor)) {
+          selectedColors.splice(destination.index, 0, selectedColor);
+        }
+        return selectedColors;
+      });
+    }
+  };
+  const colorRef = useRef<any>();
+  const [copy, setCopy] = useState(false);
+  const copyColor = () => {
+    const text = colorRef.current.innerText;
+    navigator.clipboard.writeText(text);
+    setCopy(true);
+  };
+
   return (
-    <>
-      <Reset />
-      <Container>
-        <Title>All Colors You Like</Title>
-        <Categories>
-          {categories.map((category, index) => (
-            <div
-              style={{ border: "1px solid", width: "100%", height: "100%" }}
-              key={index}
-            ></div>
-          ))}
-        </Categories>
-        <Options>
-          {options.map((option, index) => (
-            <div
-              key={index}
-              style={{ border: "1px solid", width: "100%", height: "100%" }}
-            ></div>
-          ))}
-        </Options>
-        <Menubar></Menubar>
-        <Selected>
-          {colors.map((color, index) => (
-            <div
-              style={{ border: "1px solid", width: "100%", height: "100%" }}
-              key={index}
-            ></div>
-          ))}
-        </Selected>
-      </Container>
-    </>
+    <Container>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Header>
+          <Title>All Colors You Like</Title>
+        </Header>
+        <GridContainer>
+          <Categories />
+          <Droppable direction="horizontal" droppableId="option">
+            {(provided) => (
+              <Options ref={provided.innerRef} {...provided.droppableProps}>
+                {options[categoryIndex].colors.map((option, index) => (
+                  <DraggableOption
+                    option={option}
+                    index={index}
+                    key={index + ""}
+                  />
+                ))}
+                {provided.placeholder}
+              </Options>
+            )}
+          </Droppable>
+          <Droppable direction="horizontal" droppableId="selected">
+            {(provided) => (
+              <Selected ref={provided.innerRef} {...provided.droppableProps}>
+                {colors.length === 0
+                  ? "drag your colors"
+                  : colors.map((color, index) => (
+                      <Draggable
+                        key={color}
+                        index={index}
+                        draggableId={color + "a"}
+                      >
+                        {(provided) => (
+                          <ColorDraggable
+                            ref={provided.innerRef}
+                            {...provided.dragHandleProps}
+                            {...provided.draggableProps}
+                            key={index}
+                            color={color}
+                          >
+                            <ColorMenu>
+                              <Copy onClick={copyColor}>
+                                <FontAwesomeIcon icon={faCopy} />
+                              </Copy>
+                              <Delete>
+                                <FontAwesomeIcon icon={faTrash} />
+                              </Delete>
+                              <Color ref={colorRef} color={color}>
+                                {copy ? "copied!" : color}
+                              </Color>
+                            </ColorMenu>
+                          </ColorDraggable>
+                        )}
+                      </Draggable>
+                    ))}
+                {provided.placeholder}
+              </Selected>
+            )}
+          </Droppable>
+        </GridContainer>
+        <Footer>Color Palette by Sang Min✌🏻 </Footer>
+      </DragDropContext>
+    </Container>
   );
 }
 
